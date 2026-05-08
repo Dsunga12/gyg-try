@@ -1,0 +1,49 @@
+{
+  "entities": {
+    "DashboardData": {
+      "title": "Dashboard Data",
+      "description": "Stores the latest transaction, sales, and penalty CSV data.",
+      "type": "object",
+      "properties": {
+        "transactions": {
+          "type": "string",
+          "description": "The latest transactions CSV data."
+        },
+        "sales": {
+          "type": "string",
+          "description": "The latest sales CSV data."
+        },
+        "penalties": {
+          "type": "string",
+          "description": "The latest penalties CSV data."
+        },
+        "lastUpdatedTrx": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp of the last transaction update."
+        },
+        "lastUpdatedSales": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp of the last sales update."
+        },
+        "lastUpdatedPenalty": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp of the last penalty update."
+        },
+        "updatedBy": {
+          "type": "string",
+          "description": "The user ID of the person who last updated the data."
+        }
+      },
+      "required": ["transactions", "sales", "penalties", "lastUpdatedTrx", "lastUpdatedSales", "lastUpdatedPenalty", "updatedBy"]
+    }
+  },
+  "firestore": {
+    "/dashboard_data/latest": {
+      "schema": "DashboardData",
+      "description": "The single document holding the most recent dashboard data."
+    }
+  }
+}

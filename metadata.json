@@ -1,0 +1,8 @@
+{
+  "name": "GYG Singapore Peak Hour Championship",
+  "description": "A gamified, competitive dashboard for Guzman y Gomez Singapore outlets with zone-based leagues and real-time race tracking.",
+  "requestFramePermissions": [],
+  "remixable": false,
+  "showPrompts": false,
+  "defaultView": "fullscreen"
+}

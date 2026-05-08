@@ -1,0 +1,91 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: dashboard_data
+// Document ID: latest
+// Fields:
+//   - transactions: string (required) - The latest transactions CSV data.
+//   - sales: string (required) - The latest sales CSV data.
+//   - lastUpdatedTrx: timestamp (required) - The timestamp of the last transaction update.
+//   - lastUpdatedSales: timestamp (required) - The timestamp of the last sales update.
+//   - updatedBy: string (required) - The user ID of the person who last updated the data.
+//
+// Collection: users
+// Document ID: {userId}
+// Fields:
+//   - email: string (required) - The user's email address.
+//   - role: string (required, ['admin', 'user']) - The user's role.
+//
+// ===============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        ((exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+          ((request.auth.token.email == "magpantay.jervi@gmail.com" || 
+            request.auth.token.email == "ben@gyg.com.sg" || 
+            request.auth.token.email == "daniel.sunga@gyg.com.sg") && 
+           request.auth.token.email_verified == true));
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidDashboardData(data) {
+      return (data.get('transactions', '') is string) &&
+             (data.get('sales', '') is string) &&
+             (data.get('penalties', '') is string) &&
+             (data.get('lastUpdatedTrx', request.time) is timestamp) &&
+             (data.get('lastUpdatedSales', request.time) is timestamp) &&
+             (data.get('lastUpdatedPenalty', request.time) is timestamp) &&
+             data.updatedBy == request.auth.uid;
+    }
+
+    function isValidUser(data) {
+      return data.email is string &&
+             data.role in ['admin', 'user'];
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidUser(request.resource.data) && 
+                      (isOwner(userId) && (request.resource.data.role == 'user' || isAdmin()) || isAdmin());
+      allow update: if isAuthenticated() && isValidUser(request.resource.data) && 
+                      (isAdmin() || (isOwner(userId) && request.resource.data.role == resource.data.role));
+    }
+
+    match /dashboard_data/latest {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() && isValidDashboardData(request.resource.data);
+    }
+
+    match /test/connection {
+      allow read: if true;
+    }
+  }
+}
